@@ -127,6 +127,8 @@ class ActorMailboxTest
       props
     )
 
+    Thread.sleep(10000)
+
     assertMetric("mesmer_akka_actor_dropped_messages_total") { data =>
       val points = data.getLongSumData.getPoints.asScala
         .filter(point =>

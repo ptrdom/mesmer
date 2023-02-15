@@ -39,28 +39,27 @@ trait OtelAgentTest extends TestSuite with BeforeAndAfterAll with Eventually wit
    */
   protected def assertMetrics(
     instrumentationName: String
-  )(tests: (String, MetricData => Unit)*): Unit =
-    eventually {
-      val exported = testRunner.getExportedMetrics.asScala
+  )(tests: (String, MetricData => Unit)*): Unit = {
+    val exported = testRunner.getExportedMetrics.asScala
 
-      val results = tests.map { case (metricName, test) =>
-        val selectedMetrics = exported
-          .filter(data => data.getInstrumentationScopeInfo.getName == instrumentationName && data.getName == metricName)
+    val results = tests.map { case (metricName, test) =>
+      val selectedMetrics = exported
+        .filter(data => data.getInstrumentationScopeInfo.getName == instrumentationName && data.getName == metricName)
 
-        val testData = if (selectedMetrics.isEmpty) EmptyMetricData.getInstance() :: Nil else selectedMetrics
+      val testData = if (selectedMetrics.isEmpty) EmptyMetricData.getInstance() :: Nil else selectedMetrics
 
-        testData.map(data => Try(test.apply(data))).toList
-      }
-
-      val success = results.forall(_.exists(_.isSuccess))
-
-      if (!success) {
-        results.flatten
-          .findLast(_.isFailure)
-          .fold(fail("No matching data point found"))(_.failed.foreach(ex => throw ex))
-      }
-
+      testData.map(data => Try(test.apply(data))).toList
     }
+
+    val success = results.forall(_.exists(_.isSuccess))
+
+    if (!success) {
+      results.flatten
+        .findLast(_.isFailure)
+        .fold(fail("No matching data point found"))(_.failed.foreach(ex => throw ex))
+    }
+
+  }
 
   protected def getExpectedCountWithToleration(
     point: HistogramPointData,
